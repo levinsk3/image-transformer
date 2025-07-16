@@ -1,6 +1,6 @@
 import sys
 import logging
-import PIL.Image as Image
+from PIL import Image
 import os
 from tkinter import filedialog
 
@@ -11,20 +11,45 @@ logging.basicConfig(
 )
 
 Prompts = {
-    'filepath' : "Write the absolute path of an image, or press enter to open explorer:\n",
-    'action' : "Input 1 to transform, 2 to preview, 3 to output image:\n",
-    'continue_editing' : "Input 'a' to edit another image, anything else to exit:\n",
+    'filepath' : "Write the absolute path of an image, or press enter to open file explorer:\n",
+    'action' : "ACTION LIST\n\t1 -> transform\n\t2 -> preview\n\t3 -> output image\n\t99 -> cancel without saving\nSelect action:\n",
+    'edit_another' : "Input 'a' to edit another image, anything else to exit:\n",
+    'transform_type' : "AVAILABLE TRANSFORMS\n\t1 -> rotate\n\t2 -> mirror\n\t3 -> crop\n\t4 -> scale\n\t0 -> cancel transform\nSelect transform:\n"
 }
 
-def main():
-    match len(sys.argv):
-        case 1:
-            logging.info("NO ARGUMENTS PROVIDED") # launch interactive mode
-            interactive_mode()
+
+
+def output_image(image:Image):
+    return
+
+
+def action_loop(image:Image):
+    action = input(Prompts['action'])
+    match action:
+        case '1':
+            transform_type = input(Prompts['transform_type'])
+            match transform_type:
+                case '1':
+                    pass
+                case '2':
+                    pass
+                case '3':
+                    pass
+                case '4':
+                    pass
+                case '0':
+                    pass
+        case '2':
+            image.show()
+        case '3':
+            output_image(image)
+            return
+        case '99':
+            return
         case _:
-            logging.info("SOME ARGUMENTS PROVIDED") # parse and handle input
-            for argument in sys.argv:
-                continue
+            print("Command not recognized.")
+    action_loop(image)
+
 
 def interactive_mode():
     print("IMAGE TRANSFORMER INITIALIZED")
@@ -42,22 +67,25 @@ def interactive_mode():
     # TODO check if file at file_path is valid
     print(f"Selected image: {file_path}")
     selected_image = Image.open(file_path)
-    edited_image = selected_image.copy()
 
-    match action := input(Prompts['action']):
-        case '1':
-            print("Transform selection: 1:rotate 2:mirror 3:scale ...:")
-            input()
-        case '2':
-            edited_image.show()
-        case '3':
-            print("Outfile: out.png, enter to confirm, m to modify name, c to continue editing:")
-            input()
-        case _:
-            print("Command not recognized.")
+    action_loop(selected_image.copy())
 
-    if input(Prompts['continue_editing']) == 'a':
+    if input(Prompts['edit_another']) == 'a':
         interactive_mode()
+    else:
+        return
+
+
+def main():
+    #TODO loggin configuration based on flags?
+    match len(sys.argv):
+        case 1:
+            logging.info("NO ARGUMENTS PROVIDED") # launch interactive mode
+            interactive_mode()
+        case _:
+            logging.info("SOME ARGUMENTS PROVIDED") # parse and handle input
+            for argument in sys.argv:
+                continue
 
 if __name__ == "__main__":
     main()
