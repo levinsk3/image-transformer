@@ -3,23 +3,25 @@ import logging
 from PIL import Image
 import os
 from tkinter import filedialog
+import random
 
-logging.basicConfig(
-    level = logging.DEBUG,
-    stream = sys.stdout,
-    format = '%(asctime)s - %(levelname)s - %(message)s'
-)
 
 Prompts = {
     'filepath' : "Write the absolute path of an image, or press enter to open file explorer:\n",
     'action' : "ACTION LIST\n\t1 -> transform\n\t2 -> preview\n\t3 -> output image\n\t99 -> cancel without saving\nSelect action:\n",
     'edit_another' : "Input 'a' to edit another image, anything else to exit:\n",
-    'transform_type' : "AVAILABLE TRANSFORMS\n\t1 -> rotate\n\t2 -> mirror\n\t3 -> crop\n\t4 -> scale\n\t0 -> cancel transform\nSelect transform:\n"
+    'transform_type' : "AVAILABLE TRANSFORMS\n\t1 -> rotate\n\t2 -> mirror\n\t3 -> crop\n\t4 -> scale\n\t0 -> cancel transform\nSelect transform:\n",
 }
 
 
 
 def output_image(image:Image):
+    randompostfix = random.getrandbits(32)
+    outfile = "./output/out_" + str(randompostfix) + ".png"
+    os.makedirs(os.path.dirname("./output/"), exist_ok=True) #make output folder if nonexistent
+    #TODO check for filename collision
+    image.save(outfile, 'png')
+    print(f"Image saved as {outfile}")
     return
 
 
@@ -50,7 +52,6 @@ def action_loop(image:Image):
             print("Command not recognized.")
     action_loop(image)
 
-
 def interactive_mode():
     print("IMAGE TRANSFORMER INITIALIZED")
 
@@ -77,7 +78,13 @@ def interactive_mode():
 
 
 def main():
-    #TODO loggin configuration based on flags?
+    #TODO logging configuration based on flags?
+    logging.basicConfig(
+        level = logging.DEBUG,
+        stream = sys.stdout,
+        format = '%(asctime)s - %(levelname)s - %(message)s'
+    )
+
     match len(sys.argv):
         case 1:
             logging.info("NO ARGUMENTS PROVIDED") # launch interactive mode
