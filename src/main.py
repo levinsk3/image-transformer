@@ -14,7 +14,6 @@ Prompts = {
 }
 
 
-
 def output_image(image:Image):
     randompostfix = random.getrandbits(32)
     outfile = "./output/out_" + str(randompostfix) + ".png"
@@ -67,9 +66,10 @@ def interactive_mode():
 
     # TODO check if file at file_path is valid
     print(f"Selected image: {file_path}")
-    selected_image = Image.open(file_path)
 
-    action_loop(selected_image.copy())
+    selected_image = Image.open(file_path)
+    working_copy = selected_image.copy()
+    action_loop(working_copy)
 
     if input(Prompts['edit_another']) == 'a':
         interactive_mode()
