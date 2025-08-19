@@ -1,3 +1,5 @@
-#ignore the experimental folder in root
-/sandbox/
 /output/
+*~
+*#
+/imtra/__pycache__/
+/shell.nix
