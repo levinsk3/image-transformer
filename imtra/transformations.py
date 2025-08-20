@@ -1,3 +1,8 @@
+from collections.abc import Callable
+
+from PIL import Image
+
+
 def crop(image_buffer:Image, anchor_x, anchor_y, dimension_x, dimension_y) -> Image:
     pass
 
@@ -18,3 +23,8 @@ def scale_bilinear(image_buffer:Image) -> Image:
 
 def scale_bicubic(image_buffer:Image) -> Image:
     pass
+
+
+def apply_transformation(transformation:Callable[...,Image]):
+#    choose parameters etc
+    return
