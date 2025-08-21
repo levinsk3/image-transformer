@@ -3,8 +3,9 @@ from collections.abc import Callable
 from PIL import Image
 
 
-def crop(image_buffer:Image, anchor_x, anchor_y, dimension_x, dimension_y) -> Image:
-    pass
+def crop(image_buffer:Image, anchor_x, anchor_y, width, height) -> Image:
+    print(anchor_x, anchor_y, width, height)
+    return image_buffer
 
 def mirror(image_buffer:Image, x_axis:bool, y_axis:bool) -> Image:
     pass

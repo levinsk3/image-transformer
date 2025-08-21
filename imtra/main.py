@@ -1,6 +1,6 @@
 import sys
 
-from imtra.io_handling import select_file, buffer_file, select_transformation, buffer_write, parse_arguments
+from imtra.io_handling import select_file, buffer_file, select_transformation, write_buffer, parse_arguments
 
 from imtra.transformations import apply_transformation
 
@@ -18,29 +18,31 @@ def main():
         print("Interactive Mode Initialized")
         while source_path := select_file():
             image_buffer = buffer_file(source_path)
-#            while transformation := select_transformation():
-#                apply_transformation(image_buffer, transformation)
-#            buffer_write(image_buffer)
-            input()
-            image_buffer.show()
-            input()
-            buffer_write(image_buffer)
             
+            while transformation := select_transformation():
+                image_buffer = transformation(image_buffer)
+            
+            write_buffer(image_buffer)
+            
+            print("Press Enter to select another file. (Cancel the selection to exit.)")
+            input()
 
         return 0
 
     else:
 #        logging.info("SOME ARGUMENTS PROVIDED") # parse and handle input
-        
-        if arguments_are_valid() == False:
-            return
-        
-        source_path, transformation_stack, write_path = parse_arguments()
+
+        try:
+            source_path, transformation_stack, write_path = parse_arguments()
+        except:
+            print("Invalid arguments, exiting.")
+            return 1
+
         image_buffer = buffer_file(source_path)
         
-        for transformation in transformation_stack:
+        for transformation, parameters in transformation_stack:
             apply_transformation(image_buffer, transformation)
-        buffer_write(image_buffer, write_file)
+        write_buffer(image_buffer, write_file)
 
         return 0
 
