@@ -2,9 +2,6 @@ import sys
 
 from imtra.io_handling import select_file, buffer_file, select_transformation, write_buffer, parse_arguments
 
-from imtra.transformations import apply_transformation
-
-
 def main():
 #    logging.basicConfig(
 #        level = logging.DEBUG,
@@ -15,7 +12,8 @@ def main():
     if len(sys.argv) == 1:
 #        logging.info("NO ARGUMENTS PROVIDED") # launch interactive mode
         
-        print("Interactive Mode Initialized")
+        input("Interactive Mode Initialized. Press Enter to select a file.")
+        
         while source_path := select_file():
             image_buffer = buffer_file(source_path)
             
@@ -24,8 +22,7 @@ def main():
             
             write_buffer(image_buffer)
             
-            print("Press Enter to select another file. (Cancel the selection to exit.)")
-            input()
+            input("Press Enter to select another file. (Cancel the selection to exit.)")
 
         return 0
 
