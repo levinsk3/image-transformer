@@ -9,7 +9,7 @@ import readchar
 from collections.abc import Callable
 from functools import partial
 
-from imtra.transformations import crop, mirror, rotate, scale_nearest, scale_bilinear, scale_bicubic
+from imtra.transformations import crop, mirror, shift, rotate, scale_nearest, scale_bilinear, scale_bicubic
 
 
 
@@ -38,7 +38,7 @@ def write_buffer(image_buffer:Image, write_file:str=""):
 
     
 def select_transformation() -> Callable[...,Image]:
-    char_input = input("Select transformation:\n\t[1] crop\n\t[2] mirror\n\t[3] rotate\n\t[4] scale-nearest\n\t[5] scale-bilinear\n\t[6] scale-bicubic\nOther Actions:\n\t[0] display buffer\n\t[99] write image to file\n")
+    char_input = input("Select transformation:\n\t[1] crop\n\t[2] mirror\n\t[3] rotate\n\t[4] shift\n\t[5] scale-nearest\n\t[6] scale-bilinear\n\t[7] scale-bicubic\nOther Actions:\n\t[0] display buffer\n\t[99] write image to file\n")
 
     match char_input:
         case '1':
@@ -51,6 +51,13 @@ def select_transformation() -> Callable[...,Image]:
             xaf = (input("Enter 'y' to flip along the x-axis: ") == 'y')
             yaf = (input("Enter 'y' to flip along the y-axis: ") == 'y')
             return partial(mirror, x_axis_flip = xaf, y_axis_flip = yaf)
+        case '3':
+            cc = (input("Enter 'y' to rotate counter-clokwise (default clokwise): ") == 'y')
+            return partial(rotate, counter_clokwise=cc)
+        case '4':
+            sx = int(input("Enter shift ammount along the x axis: "))
+            sy = int(input("Enter shift ammount along the y axis: "))
+            return partial(shift, shift_x=sx, shift_y=sy)
         
         case '0':
             return display_buffer
