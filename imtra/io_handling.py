@@ -58,9 +58,24 @@ def select_transformation() -> Callable[...,Image]:
             sx = int(input("Enter shift ammount along the x axis: "))
             sy = int(input("Enter shift ammount along the y axis: "))
             return partial(shift, shift_x=sx, shift_y=sy)
-        
+
+        case '5':
+            f = float(input("Enter the scaling factor: "))
+            print("Working...")
+            return partial(scale_nearest, factor=f)
+
+        case '6':
+            f = float(input("Enter the scaling factor: "))
+            print("Working...")
+            return partial(scale_bilinear, factor=f)
+
+        case '7':
+            f = float(input("Enter the scaling factor: "))
+            print("Working...")
+            return partial(scale_nearest, factor=f)
+
         case '0':
-            return display_buffer
+            return partial(display_buffer)
         case '99':
             return None
         case _:

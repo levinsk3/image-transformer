@@ -1,4 +1,4 @@
-from math import sin, cos, radians
+from math import sin, cos, radians, floor, ceil
 
 from collections.abc import Callable
 
@@ -92,12 +92,95 @@ def shift(image_buffer:Image, shift_x, shift_y) -> Image:
     return modified_buffer
 
 
-def scale_nearest(image_buffer:Image) -> Image:
-    pass
+def scale_nearest(image_buffer:Image, factor:float=1.0) -> Image:
+    image_buffer_pixels = image_buffer.load()
+    modified_buffer = Image.new("RGBA", (floor(image_buffer.width*factor), floor(image_buffer.height*factor)))
+    modified_buffer_pixels = modified_buffer.load()
+    
+    for row in range(modified_buffer.height):
+        for column in range(modified_buffer.width):
+            neighbor_column = floor(column/factor)
+            neighbor_row = floor(row/factor)
+            modified_buffer_pixels[column, row] = image_buffer_pixels[neighbor_column, neighbor_row]
+            
+    return modified_buffer
 
-def scale_bilinear(image_buffer:Image) -> Image:
-    pass
+def scale_bilinear(image_buffer:Image, factor:float=1.0) -> Image:
+    image_buffer_pixels = image_buffer.load()
+    modified_buffer = Image.new("RGBA", (floor(image_buffer.width*factor), floor(image_buffer.height*factor)))
+    modified_buffer_pixels = modified_buffer.load()
 
-def scale_bicubic(image_buffer:Image) -> Image:
+    for row in range(modified_buffer.height):
+        for column in range(modified_buffer.width):
+            projected_x = column/factor
+            projected_y = row/factor
+            
+            previous_column = floor(projected_x)
+            next_column = min(ceil(projected_x), image_buffer.width - 1)
+            previous_row = floor(projected_y)
+            next_row = min(ceil(projected_y), image_buffer.height - 1)
+            
+            x_total = (next_column-previous_column)
+            y_total = (next_row-previous_row)            
+            
+            if x_total == 0 and y_total == 0: # pixel remapped to a grid corner
+                modified_buffer_pixels[column,row] = image_buffer_pixels[previous_column,previous_row]
+                
+            elif x_total == 0: # collapsed x axis
+                weights = [0,0]
+                
+                y_to_previous = projected_y - previous_row
+                y_to_next = next_row - projected_y
+
+                weights[0] = y_to_previous/y_total
+                weights[1] = y_to_next/y_total
+
+                bands = [0,0,0,0]
+                for band in range(4):
+                    bands[band] = int(weights[0]*image_buffer_pixels[previous_column, previous_row][band] + weights[1]*image_buffer_pixels[previous_column, next_row][band])
+                
+                modified_buffer_pixels[column, row] = (bands[0],bands[1],bands[2],bands[3])
+
+            elif y_total == 0: # collapsed y axis
+                weights = [0,0]
+                
+                x_to_previous = projected_x - previous_column
+                x_to_next = next_column - projected_x
+
+                weights[0] = x_to_previous/x_total
+                weights[1] = x_to_next/x_total
+
+                bands = [0,0,0,0]
+                for band in range(4):
+                    bands[band] = int(weights[0]*image_buffer_pixels[previous_column, previous_row][band] + weights[1]*image_buffer_pixels[next_column, previous_row][band])
+                
+                modified_buffer_pixels[column, row] = (bands[0],bands[1],bands[2],bands[3])
+
+            else: # remapped inbtw 4 original pixels
+                weights = [[0,0],[0,0]]
+
+                x_to_previous = projected_x - previous_column
+                x_to_next = next_column - projected_x
+                y_to_previous = projected_y - previous_row
+                y_to_next = next_row - projected_y
+
+                square_size = (next_column - previous_column) * (next_row - previous_row)
+    
+                weights[0][0] = (x_to_previous*y_to_previous)/square_size
+                weights[0][1] = (x_to_next*y_to_previous)/square_size
+                weights[1][0] = (x_to_previous*y_to_next)/square_size
+                weights[1][1] = (x_to_next*y_to_next)/square_size
+
+                bands = [0,0,0,0]
+                for band in range(4):
+                    bands[band] = int(weights[0][0] * image_buffer_pixels[previous_column, previous_row][band] + weights[0][1] * image_buffer_pixels[next_column, previous_row][band] + weights[1][0] * image_buffer_pixels[previous_column, next_row][band] + weights[1][1]*image_buffer_pixels[next_column,next_row][band])
+
+                modified_buffer_pixels[column, row] = (bands[0],bands[1],bands[2],bands[3])
+
+    return modified_buffer
+
+def scale_bicubic(image_buffer:Image, factor:float=1.0) -> Image:
+
+    
     pass
 
