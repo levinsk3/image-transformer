@@ -1,4 +1,5 @@
 from math import sin, cos, radians, floor, ceil
+import numpy
 
 from collections.abc import Callable
 
@@ -180,7 +181,105 @@ def scale_bilinear(image_buffer:Image, factor:float=1.0) -> Image:
     return modified_buffer
 
 def scale_bicubic(image_buffer:Image, factor:float=1.0) -> Image:
+    image_buffer_pixels = image_buffer.load()
+    modified_buffer = Image.new("RGBA", (floor(image_buffer.width*factor), floor(image_buffer.height*factor)))
+    modified_buffer_pixels = modified_buffer.load()
 
-    
-    pass
+    for row in range(modified_buffer.height):
+        for column in range(modified_buffer.width):
+            projected_x = column/factor
+            projected_y = row/factor
 
+            previous_column = floor(projected_x)
+            if previous_column == image_buffer.width-1:
+                next_column = previous_column
+                previous_column -= 1
+            else:
+                next_column = previous_column + 1
+                
+            previous_row = floor(projected_y)
+            if previous_row == image_buffer.height-1:
+                next_row = previous_row
+                previous_row -= 1
+            else:
+                next_row = previous_row + 1
+
+            bands = [0,0,0,0]
+
+            for band in range(4):
+                values = [[0,0],[0,0]]
+                deriv_x = [[0,0],[0,0]]
+                deriv_y = [[0,0],[0,0]]
+                deriv_xy = [[0,0],[0,0]]
+
+                values[0][0] = image_buffer_pixels[previous_column,previous_row][band]
+                values[1][0] = image_buffer_pixels[next_column,previous_row][band]
+                values[0][1] = image_buffer_pixels[previous_column,next_row][band]
+                values[1][1] = image_buffer_pixels[next_column,next_row][band]
+
+                if previous_column == 0:
+                    deriv_x[0][0] = values[0][0] - values[1][0]
+                    deriv_x[0][1] = values[0][1] - values[1][1]
+                else:
+                    deriv_x[0][0] = image_buffer_pixels[previous_column-1,previous_row][band]-values[1][0]
+                    deriv_x[0][1] = image_buffer_pixels[previous_column-1,next_row][band]-values[1][1]
+                if next_column == image_buffer.width-1:
+                    deriv_x[1][0] = values[1][0] - values[0][0]
+                    deriv_x[1][1] = values[1][1] - values[0][1]
+                else:
+                    deriv_x[1][0] = image_buffer_pixels[next_column+1,previous_row][band]-values[0][0]
+                    deriv_x[1][1] = image_buffer_pixels[next_column+1,next_row][band]-values[0][1]
+
+
+                if previous_row == 0:
+                    deriv_y[0][0] = values[0][0] - values[0][1]
+                    deriv_y[1][0] = values[1][0] - values[1][1]
+                else:
+                    deriv_y[0][0] = image_buffer_pixels[previous_column,previous_row-1][band]-values[0][1]
+                    deriv_y[1][0] = image_buffer_pixels[next_column,previous_row-1][band]-values[1][1]
+                if next_row == image_buffer.height-1:
+                    deriv_y[0][1] = values[0][1] - values[0][0]
+                    deriv_y[1][1] = values[1][1] - values[1][0]
+                else:
+                    deriv_y[0][1] = image_buffer_pixels[previous_column,next_row+1][band]-values[0][0]
+                    deriv_y[1][1] = image_buffer_pixels[next_column,next_row+1][band]-values[1][0]
+                    
+
+                if previous_column == 0 or previous_row == 0:
+                    deriv_xy[0][0] = values[0][0] - values[1][1]
+                else:
+                    deriv_xy[0][0] = image_buffer_pixels[previous_column-1,previous_row-1][band]-values[1][1]
+                if next_column == image_buffer.width-1 or previous_row == 0:
+                    deriv_xy[1][0] = values[1][0] - values[0][1]
+                else:
+                    deriv_xy[1][0] = image_buffer_pixels[next_column+1,previous_row-1][band]-values[0][1]
+                if previous_column == 0 or next_row == image_buffer.height-1:
+                    deriv_xy[0][1] = values[0][1] - values[1][0]
+                else:
+                    deriv_xy[0][1] = image_buffer_pixels[previous_column-1,next_row+1][band]-values[1][0]
+                if next_column == image_buffer.width-1 or next_row == image_buffer.height-1:
+                    deriv_xy[1][1] = values[1][1] - values[0][0]
+                else:
+                    deriv_xy[1][1] = image_buffer_pixels[next_column+1,next_row+1][band]-values[0][0]
+                
+
+                f_matrix = numpy.array([[values[0][0],values[0][1],deriv_y[0][0],deriv_y[0][1]],
+                                        [values[1][0],values[1][1],deriv_y[1][0],deriv_y[1][1]],
+                                        [deriv_x[0][0],deriv_x[0][1],deriv_xy[0][0],deriv_xy[0][1]],
+                                        [deriv_x[1][0],deriv_x[1][1],deriv_xy[0][1],deriv_xy[1][1]]])
+
+                left_matrix = numpy.array([[1,0,0,0],[0,0,1,0],[-3,3,-2,-1],[2,-2,1,1]])
+                right_matrix = numpy.array([[1,0,-3,2],[0,0,3,-2],[0,1,-2,1],[0,0,-1,1]])
+
+                coefficient_matrix = left_matrix * f_matrix * right_matrix
+
+                x_normal = projected_x - previous_column
+                x_degrees = numpy.array([1,x_normal,x_normal**2,x_normal**3])
+                y_normal = projected_y - previous_row
+                y_degrees = numpy.array([[1],[y_normal],[y_normal**2],[y_normal**3]])
+                
+                bands[band] = int((x_degrees * coefficient_matrix * y_degrees)[0][0])
+
+            modified_buffer_pixels[column, row] = (bands[0],bands[1],bands[2],bands[3])
+
+    return modified_buffer

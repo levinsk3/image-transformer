@@ -4,7 +4,6 @@ import sys
 
 from PIL import Image
 from tkinter import filedialog
-import readchar
 
 from collections.abc import Callable
 from functools import partial
@@ -14,13 +13,13 @@ from imtra.transformations import crop, mirror, shift, rotate, scale_nearest, sc
 
 
 def select_file(source_path=None) -> str:
-    source_path = filedialog.askopenfilename(initialdir="./tests/samples/",
+    source_path = filedialog.askopenfilename(initialdir="./sample_images/",
                                                  filetypes=[("PNG Files", "*.png")])
     return source_path
 
 def buffer_file(source_path):
     print(f"Opening {source_path}")
-    image_buffer = Image.open(source_path)
+    image_buffer = Image.open(source_path).convert("RGBA")
     return image_buffer
 
 def display_buffer(image_buffer:Image):
@@ -72,7 +71,7 @@ def select_transformation() -> Callable[...,Image]:
         case '7':
             f = float(input("Enter the scaling factor: "))
             print("Working...")
-            return partial(scale_nearest, factor=f)
+            return partial(scale_bicubic, factor=f)
 
         case '0':
             return partial(display_buffer)
@@ -82,5 +81,37 @@ def select_transformation() -> Callable[...,Image]:
             return select_transformation()
 
 
-def parse_arguments() -> tuple[Image, list[Callable[...,Image]]]:
-    pass
+def parse_arguments() -> tuple[str, list[Callable[...,Image]],str]:
+    input_file = sys.argv[1]
+    transformation_chain = sys.argv[2].split('+')
+    write_file = sys.argv[3]
+
+    transformation_stack = []
+    for transformation in transformation_chain:
+        action, parameters = transformation.split(':')
+        
+        match action:
+            case "cr":
+                ax, ay, tw, th = parameters.split(',')
+                transformation_stack.append(partial(crop, anchor_x=int(ax), anchor_y=int(ay), target_width=int(tw), target_height=int(th)))
+            case "mr":
+                xaf = 'x' in parameters
+                yaf = 'y' in parameters
+                transformation_stack.append(partial(mirror, x_axis_flip = xaf, y_axis_flip = yaf))
+            case "ro":
+                cc = (parameters=="cc")
+                transformation_stack.append(partial(rotate, counter_clokwise=cc))
+            case "sh":
+                sx, sy = parameters.split(',')
+                transformation_stack.append(partial(shift, shift_x=int(sx), shift_y=int(sy)))
+            case "sn":
+                f = float(parameters)
+                transformation_stack.append(partial(scale_nearest, factor=f))
+            case "sl":
+                f = float(parameters)
+                transformation_stack.append(partial(scale_bilinear, factor=f))
+            case "sc":
+                f = float(parameters)
+                transformation_stack.append(partial(scale_bicubic, factor=f))
+
+    return (input_file, transformation_stack, write_file)

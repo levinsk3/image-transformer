@@ -23,15 +23,15 @@ def main():
     else:
 
         try:
-            source_path, transformation_stack, write_path = parse_arguments()
+            source_path, transformation_stack, write_file = parse_arguments()
         except:
             print("Invalid arguments, exiting.")
             return 1
 
         image_buffer = buffer_file(source_path)
         
-        for transformation, parameters in transformation_stack:
-            apply_transformation(image_buffer, transformation)
+        for transformation in transformation_stack:
+            image_buffer = transformation(image_buffer)
         write_buffer(image_buffer, write_file)
 
         return 0
