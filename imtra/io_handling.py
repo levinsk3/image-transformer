@@ -17,16 +17,16 @@ def select_file(source_path=None) -> str:
                                                  filetypes=[("PNG Files", "*.png")])
     return source_path
 
-def buffer_file(source_path):
+def buffer_file(source_path) -> Image:
     print(f"Opening {source_path}")
     image_buffer = Image.open(source_path).convert("RGBA")
     return image_buffer
 
-def display_buffer(image_buffer:Image):
+def display_buffer(image_buffer:Image) -> Image:
     image_buffer.show()
     return image_buffer
 
-def write_buffer(image_buffer:Image, write_file:str=""):
+def write_buffer(image_buffer:Image, write_file:str="") -> None:
     while len(write_file) == 0:
         random_write_file = "out_" + str(random.getrandbits(32))
         write_file = filedialog.asksaveasfilename(initialdir="./output/",
